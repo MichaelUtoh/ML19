@@ -5,7 +5,7 @@ from typing import Optional
 
 from pydantic import EmailStr
 
-from sqlmodel import Field, SQLModel, create_engine
+from sqlmodel import Field, SQLModel
 
 
 class UserStatus(str, Enum):
@@ -18,7 +18,6 @@ class User(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     email: EmailStr = Field(default=None, unique=True)
     password: str
-    uuid: Optional[str] = uuid.uuid4()
     username: Optional[str] = None
     first_name: Optional[str] = None
     middle_name: Optional[str] = None

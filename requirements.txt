@@ -1,3 +1,4 @@
+alembic==1.10.4
 anyio==3.6.2
 bcrypt==4.0.1
 certifi==2022.12.7
@@ -10,6 +11,8 @@ FastAPI-SQLAlchemy==0.2.1
 greenlet==2.0.2
 h11==0.14.0
 idna==3.4
+Mako==1.2.4
+MarkupSafe==2.1.2
 numpy==1.24.3
 opencv-python==4.7.0.72
 passlib==1.7.4
