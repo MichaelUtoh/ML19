@@ -9,8 +9,9 @@ from zxcvbn import zxcvbn
 from fastapi import Depends, HTTPException, Security
 from sqlmodel import Session, select
 
-from core.models.accounts import User
+from core.models.accounts import User, UserStatus
 from core.config.auth import AuthHandler
+from core.config.utils import db_save
 
 
 auth_handler = AuthHandler()
@@ -32,8 +33,21 @@ def pwd_strength_checker(data):
     return True
 
 
-def list_users_func(session):
+def get_user_info_func(user, session):
     with session:
+        user = session.exec(select(User).where(User.email == user)).first()
+        return user
+
+
+def list_users_func(user, session, search=None):
+    with session:
+
+        user = session.exec(select(User).where(User.email == user)).first()
+        if not user.status == UserStatus.ADMIN:
+            raise HTTPException(
+                status_code=400, detail="Access denied, Kindly contact admin"
+            )
+
         return session.exec(select(User)).all()
 
 
@@ -72,37 +86,40 @@ def login_func(data, session):
 
     payload = {
         "email": user.email,
-        "uuid": user.uuid,
         "access_token": auth_handler.encode_token(user.email),
         "refresh_token": auth_handler.encode_refresh_token(user.email),
     }
     return payload
 
 
-def update_func(id, data, session):
-    with session:
-        try:
-            statement = select(User).where(User.id == id)
-            user = session.exec(statement).one()
-        except:
-            msg = "User with given ID does not exist."
-            raise HTTPException(status_code=404, detail=msg)
+def update_func(id, user, data, session):
+    statement = select(User).where(User.email == user)
+    user = session.exec(statement).one()
 
-        user.username = data.username
-        user.first_name = data.first_name
-        user.middle_name = data.middle_name
-        user.last_name = data.last_name
-        user.phone = data.phone
-        user.address1 = data.address1
-        user.address2 = data.address2
-        user.next_of_kin_first_name = data.next_of_kin_first_name
-        user.next_of_kin_last_name = data.next_of_kin_last_name
-        user.next_of_kin_phone = data.next_of_kin_phone
-        user.next_of_kin_address = data.next_of_kin_address
-        session.add(user)
-        session.commit()
-        session.refresh(user)
-        return user
+    if (not user.status == UserStatus.ADMIN) and (not user.id == id):
+        raise HTTPException(status_code=404, detail="Not allowed, kindly contact admin")
+
+    try:
+        statement = select(User).where(User.id == id)
+        user = session.exec(statement).one()
+    except:
+        msg = "User with given ID does not exist."
+        raise HTTPException(status_code=404, detail=msg)
+
+    user.username = data.username
+    user.first_name = data.first_name
+    user.middle_name = data.middle_name
+    user.last_name = data.last_name
+    user.status = data.status
+    user.phone = data.phone
+    user.address1 = data.address1
+    user.address2 = data.address2
+    user.next_of_kin_first_name = data.next_of_kin_first_name
+    user.next_of_kin_last_name = data.next_of_kin_last_name
+    user.next_of_kin_phone = data.next_of_kin_phone
+    user.next_of_kin_address = data.next_of_kin_address
+    user = db_save(user, session)
+    return user
 
 
 def delete_user_func(id, session):

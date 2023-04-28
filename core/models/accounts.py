@@ -9,9 +9,9 @@ from sqlmodel import Field, SQLModel
 
 
 class UserStatus(str, Enum):
-    LEVEL_1 = "Level 1"
-    LEVEL_2 = "Level 2"
-    LEVEL_3 = "Level 3"
+    ADMIN = "admin"
+    BUSINESS_OWNER = "business owner"
+    CUSTOMER = "customer"
 
 
 class User(SQLModel, table=True):
@@ -22,6 +22,7 @@ class User(SQLModel, table=True):
     first_name: Optional[str] = None
     middle_name: Optional[str] = None
     last_name: Optional[str] = None
+    status: Optional[UserStatus] = UserStatus.CUSTOMER
     phone: Optional[str] = None
     address1: Optional[str] = None
     address2: Optional[str] = None

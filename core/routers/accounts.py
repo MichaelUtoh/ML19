@@ -3,7 +3,13 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session as SQA_Session
 
-from core.config.services import list_users_func, login_func, signup_func, update_func
+from core.config.services import (
+    get_user_info_func,
+    list_users_func,
+    login_func,
+    signup_func,
+    update_func,
+)
 
 from core.config.auth import AuthHandler
 from core.config.database import get_session
@@ -32,13 +38,24 @@ def register(data: UserCreateBasicSchema, session: SQA_Session = Depends(get_ses
     return data
 
 
+@router.get("/users/me", response_model=UserDetailSchema, status_code=200)
+def all_users(
+    user=Depends(auth_handler.auth_wrapper),
+    session: SQA_Session = Depends(get_session),
+):
+    res = get_user_info_func(user, session)
+    return res
+
+
 @router.get("/users/all", response_model=List[UserDetailSchema], status_code=200)
 def all_users(
-    user=Depends(auth_handler.auth_wrapper), session: SQA_Session = Depends(get_session)
+    user=Depends(auth_handler.auth_wrapper),
+    session: SQA_Session = Depends(get_session),
+    search: str | None = None,
 ):
     # TODO Verify user status on db
-    data = list_users_func(session)
-    return data
+    res = list_users_func(user, session, search=search)
+    return res
 
 
 @router.put("/users/{id}/update", response_model=UserDetailSchema)
@@ -48,5 +65,5 @@ def update_user(
     user=Depends(auth_handler.auth_wrapper),
     session: SQA_Session = Depends(get_session),
 ):
-    res = update_func(id, data, session)
+    res = update_func(id, user, data, session)
     return res
