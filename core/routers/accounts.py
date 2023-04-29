@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session as SQA_Session
 
 from core.config.services import (
+    delete_user_func,
     get_user_info_func,
     list_users_func,
     login_func,
@@ -67,3 +68,15 @@ def update_user(
 ):
     res = update_func(id, user, data, session)
     return res
+
+
+# Change logic to archive
+@router.delete("/users/{id}/delete", status_code=204)
+def terminate_account(
+    id: int,
+    user=Depends(auth_handler.auth_wrapper),
+    session: SQA_Session = Depends(get_session),
+):
+    print("==================> ", user)
+    delete_user_func(id, user, session)
+    return

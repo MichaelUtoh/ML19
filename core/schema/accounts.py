@@ -34,8 +34,9 @@ class UserUpdateSchema(BaseModel):
     next_of_kin_address: Optional[str]
 
 
-class UserDetailSchema(AuthFindSchema):
+class UserDetailSchema(BaseModel):
     id: int
+    email: Optional[EmailStr]
     uuid: Optional[str]
     username: Optional[str]
     first_name: Optional[str]

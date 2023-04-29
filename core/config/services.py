@@ -1,17 +1,16 @@
 from datetime import datetime, timedelta
-from typing import Optional
 
 import bcrypt
 import jwt
 from decouple import config
 from zxcvbn import zxcvbn
 
-from fastapi import Depends, HTTPException, Security
-from sqlmodel import Session, select
+from fastapi import HTTPException
+from sqlmodel import select
 
 from core.models.accounts import User, UserStatus
 from core.config.auth import AuthHandler
-from core.config.utils import db_save
+from core.config.utils import db_save, send_welcome_email_task
 
 
 auth_handler = AuthHandler()
@@ -48,7 +47,7 @@ def list_users_func(user, session, search=None):
                 status_code=400, detail="Access denied, Kindly contact admin"
             )
 
-        return session.exec(select(User)).all()
+        return session.query(User).order_by(-User.id).all()
 
 
 def signup_func(data, session):
@@ -61,18 +60,21 @@ def signup_func(data, session):
 
     salt = bcrypt.gensalt()
     hashed_pwd = bcrypt.hashpw(data.password.encode("utf-8"), salt)
-
     user = User(email=data.email.lower(), password=hashed_pwd)
-    session.add(user)
-    session.commit()
-    session.refresh(user)
+    user = db_save(user, session)
 
     payload = {
         "email": user.email,
-        "uuid": user.uuid,
         "access_token": auth_handler.encode_token(user.email),
         "refresh_token": auth_handler.encode_refresh_token(user.email),
     }
+
+    if config("CELERY_ENABLED"):
+        email_task = send_welcome_email_task.delay()
+        return payload.update({"task_id": email_task.id})
+
+    send_welcome_email_task()
+    print("No background task")
     return payload
 
 
@@ -81,7 +83,7 @@ def login_func(data, session):
     res = session.exec(statement)
     user = res.first()
 
-    if not auth_handler.verify_password(data.password, user.password):
+    if not user or not (auth_handler.verify_password(data.password, user.password)):
         raise HTTPException(status_code=400, detail="Invalid credentials")
 
     payload = {
@@ -122,10 +124,18 @@ def update_func(id, user, data, session):
     return user
 
 
-def delete_user_func(id, session):
-    statement = select(User).where(User.id == id)
-    res = session.exec(statement)
-    user = res.first()
+def delete_user_func(id, user, session):
+    print(user)
+    user = session.exec(select(User).where(User.email == user)).first()
+    if not user or not user.status == UserStatus.ADMIN:
+        msg = "Not allowed, Kindly contact admin."
+        raise HTTPException(status_code=404, detail=msg)
+
+    for_archive = session.exec(select(User).where(User.id == id)).first()
+    if not for_archive:
+        msg = "Not found."
+        raise HTTPException(status_code=404, detail=msg)
+
     session.delete(user)
     session.commit()
     return
