@@ -6,7 +6,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi_sqlalchemy import DBSessionMiddleware
 from sentry_sdk.integrations.asgi import SentryAsgiMiddleware
 
-from core.routers import accounts, uploads
+from core.routers import accounts, businesses, uploads
 from core.config.database import create_db_and_tables
 
 
@@ -44,4 +44,5 @@ app.add_middleware(
 app = start_application()
 app.add_middleware(DBSessionMiddleware, db_url=config("DATABASE_URL"))
 app.include_router(accounts.router)
+app.include_router(businesses.router)
 app.include_router(uploads.router)
