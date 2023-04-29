@@ -15,6 +15,7 @@ class Business(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     uuid: Optional[str] = uuid.uuid4()
     name: str
+    logo: Optional[str]
     description: Optional[str] = None
     owner: int
     address: str

@@ -77,6 +77,5 @@ def terminate_account(
     user=Depends(auth_handler.auth_wrapper),
     session: SQA_Session = Depends(get_session),
 ):
-    print("==================> ", user)
     delete_user_func(id, user, session)
     return

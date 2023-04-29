@@ -11,6 +11,11 @@ from sqlmodel import select
 from core.models.accounts import User, UserStatus
 from core.config.auth import AuthHandler
 from core.config.utils import db_save, send_welcome_email_task
+from core.config.permissions import (
+    has_admin_permission,
+    has_business_permission,
+    has_customer_permission
+)
 
 
 auth_handler = AuthHandler()
@@ -39,15 +44,9 @@ def get_user_info_func(user, session):
 
 
 def list_users_func(user, session, search=None):
-    with session:
-
-        user = session.exec(select(User).where(User.email == user)).first()
-        if not user.status == UserStatus.ADMIN:
-            raise HTTPException(
-                status_code=400, detail="Access denied, Kindly contact admin"
-            )
-
-        return session.query(User).order_by(-User.id).all()
+    user = session.exec(select(User).where(User.email == user)).first()
+    has_admin_permission(user)
+    return session.query(User).order_by(-User.id).all()
 
 
 def signup_func(data, session):
@@ -125,17 +124,15 @@ def update_func(id, user, data, session):
 
 
 def delete_user_func(id, user, session):
-    print(user)
     user = session.exec(select(User).where(User.email == user)).first()
-    if not user or not user.status == UserStatus.ADMIN:
-        msg = "Not allowed, Kindly contact admin."
-        raise HTTPException(status_code=404, detail=msg)
+    has_admin_permission(user)
 
-    for_archive = session.exec(select(User).where(User.id == id)).first()
-    if not for_archive:
-        msg = "Not found."
-        raise HTTPException(status_code=404, detail=msg)
+    obj = session.exec(select(User).where(User.id == id)).first()
+    if not obj:
+        raise HTTPException(status_code=404, detail="Not found.")
+    elif obj.id == user.id:
+        raise HTTPException(status_code=400, detail="Not allowed.")
 
-    session.delete(user)
+    session.delete(obj)
     session.commit()
     return
