@@ -24,6 +24,7 @@ class UserUpdateSchema(BaseModel):
     first_name: Optional[str]
     middle_name: Optional[str]
     last_name: Optional[str]
+    status: Optional[str]
     phone: Optional[str]
     address1: Optional[str]
     address2: Optional[str]
@@ -33,12 +34,15 @@ class UserUpdateSchema(BaseModel):
     next_of_kin_address: Optional[str]
 
 
-class UserDetailSchema(AuthFindSchema):
+class UserDetailSchema(BaseModel):
+    id: int
+    email: Optional[EmailStr]
     uuid: Optional[str]
     username: Optional[str]
     first_name: Optional[str]
     middle_name: Optional[str]
     last_name: Optional[str]
+    status: Optional[str]
     phone: Optional[str]
     address1: Optional[str]
     address2: Optional[str]
