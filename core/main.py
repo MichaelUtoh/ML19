@@ -13,18 +13,10 @@ from core.config.database import create_db_and_tables
 sentry_sdk.init(dsn=config("SENTRY_DSN"), traces_sample_rate=1.0)
 
 
-def configure_static(app):
-    app.mount("/static", StaticFiles(directory="static"), name="static")
-
-
-def start_application():
-    app = FastAPI(title="OSS")
-    configure_static(app)
-    create_db_and_tables()
-    return app
-
-
 app = FastAPI(title="AIML19")
+app.mount("/static", StaticFiles(directory="static"), name="static")
+create_db_and_tables()
+
 
 origins = [
     "http://localhost",
@@ -40,8 +32,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-app = start_application()
 app.add_middleware(DBSessionMiddleware, db_url=config("DATABASE_URL"))
 app.include_router(accounts.router)
 app.include_router(businesses.router)

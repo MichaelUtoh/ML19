@@ -14,7 +14,7 @@ from core.config.utils import db_save, send_welcome_email_task
 from core.config.permissions import (
     has_admin_permission,
     has_business_permission,
-    has_customer_permission
+    has_customer_permission,
 )
 
 
