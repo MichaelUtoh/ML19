@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session as SQA_Session
 from core.config.auth import AuthHandler
 from core.config.database import get_session
 from core.config.auth import AuthHandler
+from core.services.businesses import business_list_func
 
 
 auth_handler = AuthHandler()
@@ -15,10 +16,11 @@ router = APIRouter(tags=["Business"])
 
 @router.get("/businesses")
 def businesses(
-    uuid: str,
+    uuid: Optional[str] = None,
     user=Depends(auth_handler.auth_wrapper),
     session: SQA_Session = Depends(get_session),
 ):
+    business_list_func(uuid, user, session)
     return {}
 
 

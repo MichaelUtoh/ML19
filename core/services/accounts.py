@@ -21,15 +21,6 @@ from core.config.permissions import (
 auth_handler = AuthHandler()
 
 
-def create_access_token(user_id: int):
-    expire = datetime.utcnow() + timedelta(
-        minutes=config("ACCESS_TOKEN_EXPIRE_MINUTES")
-    )
-    data = {"sub": str(user_id), "exp": expire}
-    access_token = jwt.encode(data, config("SECRET_KEY"), algorithm=config("ALGORITHM"))
-    return access_token
-
-
 def pwd_strength_checker(data):
     res = zxcvbn(data.password)
     if not res["score"] >= 3:
