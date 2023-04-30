@@ -4,14 +4,13 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi_sqlalchemy import DBSessionMiddleware
-from sentry_sdk.integrations.asgi import SentryAsgiMiddleware
 
 from core.routers import accounts, businesses, uploads
 from core.config.database import create_db_and_tables
 
 
-sentry_sdk.init(dsn=config("SENTRY_DSN"), traces_sample_rate=1.0)
-
+if config('DEBUG'):
+    sentry_sdk.init(dsn=config("SENTRY_DSN"), traces_sample_rate=1.0)
 
 app = FastAPI(title="AIML19")
 app.mount("/static", StaticFiles(directory="static"), name="static")

@@ -3,7 +3,7 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session as SQA_Session
 
-from core.config.services import (
+from core.services.accounts import (
     delete_user_func,
     get_user_info_func,
     list_users_func,
