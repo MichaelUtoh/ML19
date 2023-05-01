@@ -1,4 +1,3 @@
-import uuid
 from datetime import datetime
 from enum import Enum
 from typing import List, Optional
@@ -29,6 +28,9 @@ class User(SQLModel, table=True):
     next_of_kin_last_name: Optional[str] = None
     next_of_kin_phone: Optional[str] = None
     next_of_kin_address: Optional[str] = None
-    timestamp: Optional[datetime] = datetime.now()
-
     businesses: List["Business"] = Relationship(back_populates="user")
+    created_timestamp: Optional[datetime] = Field(default=datetime.utcnow())
+    updated_timestamp: Optional[datetime] = Field(default=datetime.utcnow())
+
+    class Config:
+        orm_mode = True

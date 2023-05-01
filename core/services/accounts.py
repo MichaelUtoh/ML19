@@ -36,7 +36,9 @@ def get_user_info_func(user, session):
 
 def list_users_func(user, session, search=None):
     user = session.exec(select(User).where(User.email == user)).first()
-    has_admin_permission(user)
+    if not has_admin_permission(user):
+        msg = "Access denied, Kindly contact Admin"
+        raise HTTPException(status_code=404, detail=msg)
     return session.query(User).order_by(-User.id).all()
 
 
@@ -116,7 +118,9 @@ def update_func(id, user, data, session):
 
 def delete_user_func(id, user, session):
     user = session.exec(select(User).where(User.email == user)).first()
-    has_admin_permission(user)
+    if not has_admin_permission(user):
+        msg = "Access denied, Kindly contact Admin"
+        raise HTTPException(status_code=404, detail=msg)
 
     obj = session.exec(select(User).where(User.id == id)).first()
     if not obj:

@@ -11,8 +11,9 @@ class Location(SQLModel, table=True):
     id: int = Field(primary_key=True)
     state: str
     capital: str
-
     businesses: List["Business"] = Relationship(back_populates="location")
+    created_timestamp: Optional[datetime] = Field(default=datetime.utcnow())
+    updated_timestamp: Optional[datetime] = Field(default=datetime.utcnow())
 
 
 class Business(SQLModel, table=True):
@@ -23,12 +24,15 @@ class Business(SQLModel, table=True):
     description: Optional[str] = None
     open_days: list[str]
     address: str
-
     location_id: int = Field(foreign_key="location.id")
     location: Optional[Location] = Relationship(back_populates="businesses")
-
     user_id: Optional[int] = Field(default=None, foreign_key="user.id")
     user: Optional[User] = Relationship(back_populates="businesses")
+    created_timestamp: Optional[datetime] = Field(default=datetime.utcnow())
+    updated_timestamp: Optional[datetime] = Field(default=datetime.utcnow())
+
+    class Config:
+        orm_mode = True
 
     # class Config:
     #     arbitrary_types_allowed = True
