@@ -1,14 +1,18 @@
 import uuid
 from datetime import datetime
-from typing import Optional
+from typing import List, Optional
 
 from sqlmodel import Field, Relationship, SQLModel
+
+from core.models.accounts import User
 
 
 class Location(SQLModel, table=True):
     id: int = Field(primary_key=True)
     state: str
     capital: str
+
+    businesses: List["Business"] = Relationship(back_populates="location")
 
 
 class Business(SQLModel, table=True):
@@ -19,9 +23,12 @@ class Business(SQLModel, table=True):
     description: Optional[str] = None
     open_days: list[str]
     address: str
+
     location_id: int = Field(foreign_key="location.id")
-    location: Location = Relationship(back_populates="businesses")
-    owner_id: Optional[int] = Field(default=None, foreign_key="user.id")
+    location: Optional[Location] = Relationship(back_populates="businesses")
+
+    user_id: Optional[int] = Field(default=None, foreign_key="user.id")
+    user: Optional[User] = Relationship(back_populates="businesses")
 
     # class Config:
     #     arbitrary_types_allowed = True
