@@ -1,7 +1,20 @@
 import uuid
+from datetime import datetime
 from typing import Optional
 
 from pydantic import BaseModel
+
+
+class LocationDetailSchema(BaseModel):
+    id: int
+    state: str
+    capital: str
+    created_timestamp: Optional[datetime] = None
+
+
+class LocationSchema(BaseModel):
+    state: str
+    capital: str
 
 
 class BusinessCreateSchema(BaseModel):

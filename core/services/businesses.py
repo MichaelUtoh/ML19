@@ -7,7 +7,7 @@ from core.config.auth import AuthHandler
 from core.config.database import get_session
 from core.config.permissions import has_admin_permission, has_business_permission
 from core.config.utils import db_save
-from core.schema.businesses import BusinessCreateSchema
+from core.schema.businesses import BusinessCreateSchema, LocationSchema
 from core.models.accounts import User
 from core.models.businesses import Business, Location
 
@@ -15,11 +15,24 @@ from core.models.businesses import Business, Location
 auth_handler = AuthHandler()
 
 
-def location_create_func(
+def locations_list_func(
     user: Depends(auth_handler.auth_wrapper),
     session: SQA_Session = Depends(get_session),
 ):
     pass
+
+
+def locations_create_func(
+    data: LocationSchema,
+    user: Depends(auth_handler.auth_wrapper),
+    session: SQA_Session = Depends(get_session),
+):
+    user = session.query(User).where(User.email == user).first()
+    if not has_admin_permission(user):
+        raise HTTPException(status_code=404, detail="Not allowed, Kindly contact admin")
+
+    location = Location(state=data.state, capital=data.capital)
+    return db_save(location, session)
 
 
 def business_list_func(
