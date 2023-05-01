@@ -9,7 +9,7 @@ from core.routers import accounts, businesses, uploads
 from core.config.database import create_db_and_tables
 
 
-if config("DEBUG"):
+if config("DEBUG") == True:
     sentry_sdk.init(dsn=config("SENTRY_DSN"), traces_sample_rate=1.0)
 
 app = FastAPI(title="AIML19")
