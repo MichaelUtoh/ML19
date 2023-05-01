@@ -1,11 +1,10 @@
 import uuid
 from datetime import datetime
 from enum import Enum
-from typing import Optional
+from typing import List, Optional
 
 from pydantic import EmailStr
-
-from sqlmodel import Field, SQLModel
+from sqlmodel import Field, Relationship, SQLModel
 
 
 class UserStatus(str, Enum):
@@ -31,3 +30,5 @@ class User(SQLModel, table=True):
     next_of_kin_phone: Optional[str] = None
     next_of_kin_address: Optional[str] = None
     timestamp: Optional[datetime] = datetime.now()
+
+    businesses: List["Business"] = Relationship(back_populates="user")
