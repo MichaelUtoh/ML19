@@ -33,7 +33,7 @@ def add_location(
     return data
 
 
-@router.get("/locations")
+@router.get("/locations", response_model=List[LocationDetailSchema])
 def get_location(
     user=Depends(auth_handler.auth_wrapper),
     session: SQA_Session = Depends(get_session),
@@ -103,6 +103,22 @@ def businesses(
     uuid: str,
     user=Depends(auth_handler.auth_wrapper),
     session: SQA_Session = Depends(get_session),
+):
+    return {}
+
+
+@router.get("/businesses/{uuid}/reviews")
+def business_reviews(
+    uuid: str,
+    user=Depends(auth_handler.auth_wrapper),
+):
+    return {}
+
+
+@router.post("/businesses/{uuid}/reviews/add")
+def business_reviews(
+    uuid: str,
+    user=Depends(auth_handler.auth_wrapper),
 ):
     return {}
 

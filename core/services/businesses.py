@@ -19,7 +19,10 @@ def locations_list_func(
     user: Depends(auth_handler.auth_wrapper),
     session: SQA_Session = Depends(get_session),
 ):
-    pass
+    user = session.query(User).where(User.email == user).first()
+    if not has_admin_permission(user) or has_business_permission(user):
+        raise HTTPException(status_code=404, detail="Not allowed, Kindly contact admin")
+    return session.query(Location).all()
 
 
 def locations_create_func(
