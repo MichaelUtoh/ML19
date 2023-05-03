@@ -9,12 +9,15 @@ from core.config.database import get_session
 from core.schema.businesses import (
     BusinessCreateSchema,
     BusinessDetailListSchema,
+    IdListSchema,
     LocationDetailSchema,
     LocationSchema,
 )
 from core.services.businesses import (
     business_create_func,
+    business_delete_func,
     business_list_func,
+    business_update_func,
     locations_create_func,
     locations_list_func,
 )
@@ -63,22 +66,25 @@ def businesses(
     return data
 
 
-@router.delete("/businesses/{uuid}/delete")
-def businesses(
-    uuid: str,
+@router.patch("/businesses/delete", status_code=204)
+def delete_business(
+    ids: IdListSchema,
     user=Depends(auth_handler.auth_wrapper),
     session: SQA_Session = Depends(get_session),
 ):
-    return {}
+    business_delete_func(ids, user, session)
+    return
 
 
 @router.put("/businesses/{uuid}/details")
 def update_business_details(
     uuid: str,
+    data: BusinessCreateSchema,
     user=Depends(auth_handler.auth_wrapper),
     session: SQA_Session = Depends(get_session),
 ):
-    return {}
+    data = business_update_func(uuid, data, user, session)
+    return data
 
 
 @router.get("/businesses/{uuid}/products")

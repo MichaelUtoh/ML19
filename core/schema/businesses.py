@@ -5,6 +5,10 @@ from typing import Optional
 from pydantic import BaseModel
 
 
+class IdListSchema(BaseModel):
+    ids: list[int]
+
+
 class LocationDetailSchema(BaseModel):
     id: int
     state: str
@@ -18,6 +22,8 @@ class LocationSchema(BaseModel):
 
 
 class BusinessDetailListSchema(BaseModel):
+    id: int
+    uuid: str
     name: str
     logo: Optional[str]
     description: Optional[str]

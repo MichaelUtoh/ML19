@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session as SQA_Session
 from core.config.auth import AuthHandler
 from core.config.database import get_session
 from core.config.permissions import has_admin_permission, has_business_permission
-from core.config.utils import db_save
+from core.config.utils import db_save, db_bulk_delete
 from core.schema.businesses import BusinessCreateSchema, LocationSchema
 from core.models.accounts import User
 from core.models.businesses import Business, Location
@@ -50,15 +50,20 @@ def business_list_func(
         data = session.query(Business).where(Business.user == user).all()
         for idx in data:
             idx.open_days = idx.open_days.strip("{}").split(",")
-            idx.location = session.query(Location).where(Location.id == idx.location_id).first()
+            idx.location = (
+                session.query(Location).where(Location.id == idx.location_id).first()
+            )
 
     elif has_admin_permission(user):
         data = session.query(Business).all()
         for idx in data:
             idx.open_days = idx.open_days.strip("{}").split(",")
-            idx.location = session.query(Location).where(Location.id == idx.location_id).first()
+            idx.location = (
+                session.query(Location).where(Location.id == idx.location_id).first()
+            )
 
     return data
+
 
 def business_create_func(
     data: BusinessCreateSchema,
@@ -83,7 +88,40 @@ def business_create_func(
         location_id=location.id,
         user_id=user.id,
     )
-    print('=================>')
-    print(business)
-    print('<=================')
+    # print('=================>')
+    # print(business)
+    # print('<=================')
     return db_save(business, session)
+
+
+
+
+def business_update_func(
+        uuid: str,
+    data: BusinessCreateSchema,
+    user: Depends(auth_handler.auth_wrapper),
+    session: SQA_Session = Depends(get_session),
+):
+    user = session.query(User).where(User.email == user).first()
+    if not has_admin_permission(user) and not has_business_permission(user):
+        raise HTTPException(status_code=404, detail="Not Allowed, Kindly contact Admin")
+
+    business = session.query(Business).where(Business.uuid == uuid).first()
+    if not business:
+        raise HTTPException(status_code=404, detail="Not found")
+    
+    print(data.dict())
+
+
+
+
+def business_delete_func(
+    ids: list,
+    user: Depends(auth_handler.auth_wrapper),
+    session: SQA_Session = Depends(get_session),
+):
+    user = session.query(User).where(User.email == user).first()
+    if not has_admin_permission(user):
+        raise HTTPException(status_code=404, detail="Not allowed, Kindly contact Admin")
+
+    db_bulk_delete(ids, Business, session)

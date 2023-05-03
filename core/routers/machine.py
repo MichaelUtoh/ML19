@@ -37,8 +37,8 @@ def generate_text(data: TextSchema):
     co = cohere.Client(config("COHERE_API_KEY"))
     inputs = [data.review]
     response = co.classify(
-        model='large',
+        model="large",
         inputs=inputs,
         examples=examples,
     )
-    return {'detail': response}
+    return {"detail": response}
