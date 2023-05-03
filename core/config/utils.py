@@ -1,4 +1,4 @@
-from core.celery_app import celery_app
+from sqlalchemy import delete
 
 
 def db_save(obj, session):
@@ -8,7 +8,11 @@ def db_save(obj, session):
     return obj
 
 
-@celery_app.task()
-def send_welcome_email_task():
-    print("Sending welcome email...")
-    return
+def db_model_delete(model, session):
+    session.query(model).delete()
+    session.commit()
+
+
+def db_bulk_delete(data: list[int], model, session):
+    session.exec(delete(model).where(model.id.in_(data.ids)))
+    session.commit()

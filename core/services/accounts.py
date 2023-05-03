@@ -10,7 +10,8 @@ from sqlmodel import select
 
 from core.models.accounts import User, UserStatus
 from core.config.auth import AuthHandler
-from core.config.utils import db_save, send_welcome_email_task
+from core.config.tasks import send_welcome_email_task
+from core.config.utils import db_save
 from core.config.permissions import (
     has_admin_permission,
     has_business_permission,

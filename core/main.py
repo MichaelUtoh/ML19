@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi_sqlalchemy import DBSessionMiddleware
 
-from core.routers import accounts, businesses, uploads
+from core.routers import accounts, businesses, machine
 from core.config.database import create_db_and_tables
 
 
@@ -34,4 +34,4 @@ app.add_middleware(
 app.add_middleware(DBSessionMiddleware, db_url=config("DATABASE_URL"))
 app.include_router(accounts.router)
 app.include_router(businesses.router)
-app.include_router(uploads.router)
+app.include_router(machine.router)
