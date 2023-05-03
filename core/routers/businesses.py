@@ -8,6 +8,7 @@ from core.config.auth import AuthHandler
 from core.config.database import get_session
 from core.schema.businesses import (
     BusinessCreateSchema,
+    BusinessDetailListSchema,
     LocationDetailSchema,
     LocationSchema,
 )
@@ -42,7 +43,7 @@ def get_location(
     return data
 
 
-@router.get("/businesses")
+@router.get("/businesses", response_model=List[BusinessDetailListSchema])
 def businesses(
     uuid: Optional[str] = None,
     user=Depends(auth_handler.auth_wrapper),
@@ -59,7 +60,7 @@ def businesses(
     session: SQA_Session = Depends(get_session),
 ):
     data = business_create_func(data, user, session)
-    return {}
+    return data
 
 
 @router.delete("/businesses/{uuid}/delete")

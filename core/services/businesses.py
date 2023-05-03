@@ -1,5 +1,6 @@
 from typing import Optional
 
+from decouple import config
 from fastapi import Depends, HTTPException
 from sqlalchemy.orm import Session as SQA_Session
 
@@ -20,7 +21,7 @@ def locations_list_func(
     session: SQA_Session = Depends(get_session),
 ):
     user = session.query(User).where(User.email == user).first()
-    if not has_admin_permission(user) or has_business_permission(user):
+    if not has_business_permission(user) and not has_admin_permission(user):
         raise HTTPException(status_code=404, detail="Not allowed, Kindly contact admin")
     return session.query(Location).all()
 
@@ -43,12 +44,21 @@ def business_list_func(
     user: Depends(auth_handler.auth_wrapper),
     session: SQA_Session = Depends(get_session),
 ):
+    data = []
     user = session.query(User).where(User.email == user).first()
     if has_business_permission(user):
-        return session.query(Business).where(Business.owner == user).all()
-    elif has_admin_permission(user):
-        return session.query(Business).all()
+        data = session.query(Business).where(Business.user == user).all()
+        for idx in data:
+            idx.open_days = idx.open_days.strip("{}").split(",")
+            idx.location = session.query(Location).where(Location.id == idx.location_id).first()
 
+    elif has_admin_permission(user):
+        data = session.query(Business).all()
+        for idx in data:
+            idx.open_days = idx.open_days.strip("{}").split(",")
+            idx.location = session.query(Location).where(Location.id == idx.location_id).first()
+
+    return data
 
 def business_create_func(
     data: BusinessCreateSchema,
@@ -56,6 +66,9 @@ def business_create_func(
     session: SQA_Session = Depends(get_session),
 ):
     user = session.query(User).where(User.email == user).first()
+    if len(user.businesses) == config("BUSINESS_COUNT_MAX"):
+        msg = "You have reached maximum number of businesses allowed"
+        raise HTTPException(status_code=404, detail=msg)
     location = session.query(Location).where(Location.id == data.location).first()
 
     if not location:
@@ -67,7 +80,10 @@ def business_create_func(
         description=data.description,
         address=data.address,
         open_days=data.open_days,
-        location_id=location,
-        user_id=user,
+        location_id=location.id,
+        user_id=user.id,
     )
+    print('=================>')
+    print(business)
+    print('<=================')
     return db_save(business, session)

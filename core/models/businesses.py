@@ -24,7 +24,7 @@ class Business(SQLModel, table=True):
     description: Optional[str] = None
     open_days: list[str]
     address: str
-    location_id: int = Field(foreign_key="location.id")
+    location_id: int = Field(default=None, foreign_key="location.id")
     location: Optional[Location] = Relationship(back_populates="businesses")
     user_id: Optional[int] = Field(default=None, foreign_key="user.id")
     user: Optional[User] = Relationship(back_populates="businesses")

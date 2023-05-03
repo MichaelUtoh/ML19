@@ -17,6 +17,15 @@ class LocationSchema(BaseModel):
     capital: str
 
 
+class BusinessDetailListSchema(BaseModel):
+    name: str
+    logo: Optional[str]
+    description: Optional[str]
+    open_days: list[str]
+    address: str
+    location: LocationSchema
+
+
 class BusinessCreateSchema(BaseModel):
     name: str
     logo: Optional[str]
