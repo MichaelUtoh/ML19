@@ -1,5 +1,6 @@
 from typing import Optional
 
+from cloudinary.uploader import upload
 from decouple import config
 from fastapi import Depends, HTTPException
 from sqlalchemy.orm import Session as SQA_Session
@@ -7,7 +8,7 @@ from sqlalchemy.orm import Session as SQA_Session
 from core.config.auth import AuthHandler
 from core.config.database import get_session
 from core.config.permissions import has_admin_permission, has_business_permission
-from core.config.utils import db_save, db_bulk_delete
+from core.config.utils import db_save, db_bulk_delete, db_obj_by_uuid
 from core.schema.businesses import BusinessCreateSchema, LocationSchema
 from core.models.accounts import User
 from core.models.businesses import Business, Location
@@ -94,10 +95,8 @@ def business_create_func(
     return db_save(business, session)
 
 
-
-
 def business_update_func(
-        uuid: str,
+    uuid: str,
     data: BusinessCreateSchema,
     user: Depends(auth_handler.auth_wrapper),
     session: SQA_Session = Depends(get_session),
@@ -107,12 +106,33 @@ def business_update_func(
         raise HTTPException(status_code=404, detail="Not Allowed, Kindly contact Admin")
 
     business = session.query(Business).where(Business.uuid == uuid).first()
-    if not business:
-        raise HTTPException(status_code=404, detail="Not found")
-    
-    print(data.dict())
+    business.name = data.name
+    business.description = data.description
+    business.open_days = data.open_days
+    business.address = data.address
+    business.location_id = data.location
+
+    business = db_save(business, session)
+
+    business.open_days = business.open_days.strip("{}").split(",")
+    business.location = (
+        session.query(Location).where(Location.id == business.location_id).first()
+    )
+    return business
 
 
+def business_logo_func(uuid, file, user, session):
+    business = db_obj_by_uuid(uuid, Business, session)
+    folder_path = f"businesses/{business.name}{business.uuid[:7]}"
+    res = upload(file.file, folder=folder_path)
+    logo_url = res["secure_url"]
+    business.logo = logo_url
+    data = db_save(business, session)
+    business.open_days = business.open_days.strip("{}").split(",")
+    business.location = (
+        session.query(Location).where(Location.id == business.location_id).first()
+    )
+    return data
 
 
 def business_delete_func(

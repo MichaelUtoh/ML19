@@ -34,7 +34,6 @@ class BusinessDetailListSchema(BaseModel):
 
 class BusinessCreateSchema(BaseModel):
     name: str
-    logo: Optional[str]
     description: Optional[str]
     open_days: Optional[list[str]] = [
         "monday",
