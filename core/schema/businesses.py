@@ -27,14 +27,13 @@ class BusinessDetailListSchema(BaseModel):
     name: str
     logo: Optional[str]
     description: Optional[str]
-    open_days: list[str]
     address: str
     location: LocationSchema
+    open_days: list[str]
 
 
 class BusinessCreateSchema(BaseModel):
     name: str
-    logo: Optional[str]
     description: Optional[str]
     open_days: Optional[list[str]] = [
         "monday",

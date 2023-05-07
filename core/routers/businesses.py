@@ -1,7 +1,7 @@
 import uuid
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, File, UploadFile
 from sqlalchemy.orm import Session as SQA_Session
 
 from core.config.auth import AuthHandler
@@ -17,6 +17,8 @@ from core.services.businesses import (
     business_create_func,
     business_delete_func,
     business_list_func,
+    business_logo_func,
+    business_obj_func,
     business_update_func,
     locations_create_func,
     locations_list_func,
@@ -48,7 +50,7 @@ def get_location(
 
 @router.get("/businesses", response_model=List[BusinessDetailListSchema])
 def businesses(
-    uuid: Optional[str] = None,
+    # uuid: Optional[str] = None,
     user=Depends(auth_handler.auth_wrapper),
     session: SQA_Session = Depends(get_session),
 ):
@@ -76,7 +78,17 @@ def delete_business(
     return
 
 
-@router.put("/businesses/{uuid}/details")
+@router.get("/businesses/{uuid}/details", response_model=BusinessDetailListSchema)
+def businesses(
+    uuid: Optional[str] = None,
+    user=Depends(auth_handler.auth_wrapper),
+    session: SQA_Session = Depends(get_session),
+):
+    data = business_obj_func(uuid, user, session)
+    return data
+
+
+@router.put("/businesses/{uuid}/update", response_model=BusinessDetailListSchema)
 def update_business_details(
     uuid: str,
     data: BusinessCreateSchema,
@@ -84,6 +96,21 @@ def update_business_details(
     session: SQA_Session = Depends(get_session),
 ):
     data = business_update_func(uuid, data, user, session)
+    return data
+
+
+@router.post(
+    "/businesses/{uuid}/add_logo",
+    response_model=BusinessDetailListSchema,
+    status_code=200,
+)
+def update_business_details(
+    uuid: str,
+    file: UploadFile = File(),
+    user=Depends(auth_handler.auth_wrapper),
+    session: SQA_Session = Depends(get_session),
+):
+    data = business_logo_func(uuid, file, user, session)
     return data
 
 
