@@ -18,6 +18,7 @@ from core.services.businesses import (
     business_delete_func,
     business_list_func,
     business_logo_func,
+    business_obj_func,
     business_update_func,
     locations_create_func,
     locations_list_func,
@@ -75,6 +76,16 @@ def delete_business(
 ):
     business_delete_func(ids, user, session)
     return
+
+
+@router.get("/businesses/{uuid}/details", response_model=BusinessDetailListSchema)
+def businesses(
+    uuid: Optional[str] = None,
+    user=Depends(auth_handler.auth_wrapper),
+    session: SQA_Session = Depends(get_session),
+):
+    data = business_obj_func(uuid, user, session)
+    return data
 
 
 @router.put("/businesses/{uuid}/update", response_model=BusinessDetailListSchema)

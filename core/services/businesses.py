@@ -95,6 +95,23 @@ def business_create_func(
     return db_save(business, session)
 
 
+def business_obj_func(
+    uuid: str,
+    user: Depends(auth_handler.auth_wrapper),
+    session: SQA_Session = Depends(get_session),
+):
+    user = session.query(User).where(User.email == user).first()
+    if not has_admin_permission(user) and not has_business_permission(user):
+        raise HTTPException(status_code=404, detail="Not Allowed, Kindly contact Admin")
+    
+    business = db_obj_by_uuid(uuid, Business, session)
+    business.open_days = business.open_days.strip("{}").split(",")
+    business.location = (
+        session.query(Location).where(Location.id == business.location_id).first()
+    )
+    return business
+
+
 def business_update_func(
     uuid: str,
     data: BusinessCreateSchema,
