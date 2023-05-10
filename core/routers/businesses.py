@@ -13,13 +13,16 @@ from core.schema.businesses import (
     LocationDetailSchema,
     LocationSchema,
 )
+from core.schema.products import ProductCreateUpdateSchema
 from core.services.businesses import (
+    add_business_products,
     business_create_func,
     business_delete_func,
     business_list_func,
     business_logo_func,
     business_obj_func,
     business_update_func,
+    get_business_products_func,
     locations_create_func,
     locations_list_func,
 )
@@ -58,7 +61,7 @@ def businesses(
     return data
 
 
-@router.post("/businesses/add")
+@router.post("/businesses/create")
 def businesses(
     data: BusinessCreateSchema,
     user=Depends(auth_handler.auth_wrapper),
@@ -115,20 +118,23 @@ def update_business_details(
 
 
 @router.get("/businesses/{uuid}/products")
-def businesses(
+def get_products(
     uuid: str,
     user=Depends(auth_handler.auth_wrapper),
     session: SQA_Session = Depends(get_session),
 ):
+    get_business_products_func(uuid, user, session)
     return {}
 
 
 @router.post("/businesses/{uuid}/products/add")
-def businesses(
+def add_products(
     uuid: str,
+    data: ProductCreateUpdateSchema,
     user=Depends(auth_handler.auth_wrapper),
     session: SQA_Session = Depends(get_session),
 ):
+    add_business_products(uuid, data, user, session)
     return {}
 
 

@@ -28,11 +28,19 @@ class Business(SQLModel, table=True):
     location: Optional[Location] = Relationship(back_populates="businesses")
     user_id: Optional[int] = Field(default=None, foreign_key="user.id")
     user: Optional[User] = Relationship(back_populates="businesses")
+    products: List["Product"] = Relationship(back_populates="business")
     created_timestamp: Optional[datetime] = Field(default=datetime.utcnow())
     updated_timestamp: Optional[datetime] = Field(default=datetime.utcnow())
 
     class Config:
         orm_mode = True
 
-    # class Config:
-    #     arbitrary_types_allowed = True
+class Product(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    name: str
+    product_no: str
+    description: str
+    business_id: Optional[int] = Field(default=None, foreign_key="business.id")
+    business: Optional[Business] = Relationship(back_populates="products")
+    created_timestamp: Optional[datetime] = Field(default=datetime.utcnow())
+    updated_timestamp: Optional[datetime] = Field(default=datetime.utcnow())

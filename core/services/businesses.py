@@ -162,3 +162,11 @@ def business_delete_func(
         raise HTTPException(status_code=404, detail="Not allowed, Kindly contact Admin")
 
     db_bulk_delete(ids, Business, session)
+
+
+def get_business_products_func(uuid, user, session):
+    print(uuid, user, session)
+
+
+def add_business_products(uuid, data, user, session):
+    print(uuid, data, user, session)

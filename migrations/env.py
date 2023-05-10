@@ -7,7 +7,7 @@ from sqlmodel import SQLModel
 from alembic import context
 
 from core.models.accounts import User
-from core.models.businesses import Business, Location
+from core.models.businesses import Business, Location, Product
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
