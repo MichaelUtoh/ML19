@@ -31,3 +31,13 @@ def db_obj_by_uuid(uuid: str, model, session):
     if not obj:
         raise HTTPException(status_code=404, detail="Not found.")
     return obj
+
+
+def business_location_func(businesses: list, session):
+    from core.models.businesses import Location
+
+    for idx in businesses:
+        idx.open_days = idx.open_days.strip("{}").split(",")
+        idx.location = (
+            session.query(Location).where(Location.id == idx.location_id).first()
+        )

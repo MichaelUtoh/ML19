@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 
+
 class ProductListSchema(BaseModel):
     id: int
     name: str

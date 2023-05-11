@@ -35,6 +35,7 @@ class Business(SQLModel, table=True):
     class Config:
         orm_mode = True
 
+
 class Product(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     name: str

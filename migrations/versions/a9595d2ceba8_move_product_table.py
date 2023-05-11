@@ -11,8 +11,8 @@ import sqlmodel
 
 
 # revision identifiers, used by Alembic.
-revision = 'a9595d2ceba8'
-down_revision = '739b134ca21d'
+revision = "a9595d2ceba8"
+down_revision = "739b134ca21d"
 branch_labels = None
 depends_on = None
 
