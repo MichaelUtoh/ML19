@@ -4,6 +4,8 @@ from typing import Optional
 
 from pydantic import BaseModel
 
+from core.schema.products import ProductListSchema
+
 
 class IdListSchema(BaseModel):
     ids: list[int]
@@ -19,6 +21,14 @@ class LocationDetailSchema(BaseModel):
 class LocationSchema(BaseModel):
     state: str
     capital: str
+
+
+class BusinessProductsSchema(BaseModel):
+    id: int
+    uuid: str
+    name: str
+    address: str
+    products: list[ProductListSchema]
 
 
 class BusinessDetailListSchema(BaseModel):

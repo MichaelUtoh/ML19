@@ -6,7 +6,6 @@ class ProductListSchema(BaseModel):
     name: str
     product_no: str
     description: str
-    business_id: int
 
 
 class ProductCreateUpdateSchema(BaseModel):

@@ -9,6 +9,7 @@ from core.config.database import get_session
 from core.schema.businesses import (
     BusinessCreateSchema,
     BusinessDetailListSchema,
+    BusinessProductsSchema,
     IdListSchema,
     LocationDetailSchema,
     LocationSchema,
@@ -117,14 +118,13 @@ def update_business_details(
     return data
 
 
-@router.get("/businesses/{uuid}/products")
+@router.get("/businesses/{uuid}/products", response_model=BusinessProductsSchema)
 def get_products(
     uuid: str,
-    user=Depends(auth_handler.auth_wrapper),
+    email=Depends(auth_handler.auth_wrapper),
     session: SQA_Session = Depends(get_session),
 ):
-    get_business_products_func(uuid, user, session)
-    return {}
+    return get_business_products_func(uuid, email, session)
 
 
 @router.post("/businesses/{uuid}/products/add")
