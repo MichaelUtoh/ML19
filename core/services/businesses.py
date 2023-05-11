@@ -8,10 +8,17 @@ from sqlalchemy.orm import Session as SQA_Session
 from core.config.auth import AuthHandler
 from core.config.database import get_session
 from core.config.permissions import has_admin_permission, has_business_permission
-from core.config.utils import db_save, db_bulk_delete, db_obj_by_uuid
+from core.config.utils import (
+    business_location_func,
+    db_save,
+    db_bulk_delete,
+    db_obj_by_fkeys,
+    db_obj_by_uuid,
+    get_db_user,
+)
 from core.schema.businesses import BusinessCreateSchema, LocationSchema
 from core.models.accounts import User
-from core.models.businesses import Business, Location
+from core.models.businesses import Business, Location, Product
 
 
 auth_handler = AuthHandler()
@@ -47,21 +54,14 @@ def business_list_func(
 ):
     data = []
     user = session.query(User).where(User.email == user).first()
+
     if has_business_permission(user):
         data = session.query(Business).where(Business.user == user).all()
-        for idx in data:
-            idx.open_days = idx.open_days.strip("{}").split(",")
-            idx.location = (
-                session.query(Location).where(Location.id == idx.location_id).first()
-            )
+        business_location_func(businesses, session)
 
     elif has_admin_permission(user):
-        data = session.query(Business).all()
-        for idx in data:
-            idx.open_days = idx.open_days.strip("{}").split(",")
-            idx.location = (
-                session.query(Location).where(Location.id == idx.location_id).first()
-            )
+        businesses = session.query(Business).all()
+        business_location_func(businesses, session)
 
     return data
 
@@ -103,7 +103,7 @@ def business_obj_func(
     user = session.query(User).where(User.email == user).first()
     if not has_admin_permission(user) and not has_business_permission(user):
         raise HTTPException(status_code=404, detail="Not Allowed, Kindly contact Admin")
-    
+
     business = db_obj_by_uuid(uuid, Business, session)
     business.open_days = business.open_days.strip("{}").split(",")
     business.location = (
@@ -162,3 +162,23 @@ def business_delete_func(
         raise HTTPException(status_code=404, detail="Not allowed, Kindly contact Admin")
 
     db_bulk_delete(ids, Business, session)
+
+
+def get_business_products_func(uuid, user, session):
+    user = get_db_user(user, session)
+    if not has_admin_permission(user) and not has_business_permission(user):
+        raise HTTPException(status_code=404, detail="Not allowed, Kindly contact Admin")
+
+    business = db_obj_by_uuid(uuid, Business, session)
+    business.products = db_obj_by_fkeys(business, Product, session)
+    return business
+
+
+def add_business_products(uuid, data, user, session):
+    print(data)
+    try:
+        business = db_obj_by_uuid(uuid, Business, session)
+    except:
+        raise HTTPException(status_code=404, detail="Not found")
+
+    products = None

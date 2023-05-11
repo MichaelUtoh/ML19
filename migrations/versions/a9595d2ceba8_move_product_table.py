@@ -1,8 +1,8 @@
-"""add product table
+"""move product table
 
-Revision ID: f003c5824687
-Revises: a3727217bd3b
-Create Date: 2023-05-07 23:54:21.567394
+Revision ID: a9595d2ceba8
+Revises: 739b134ca21d
+Create Date: 2023-05-10 09:21:45.724401
 
 """
 from alembic import op
@@ -11,8 +11,8 @@ import sqlmodel
 
 
 # revision identifiers, used by Alembic.
-revision = "f003c5824687"
-down_revision = "a3727217bd3b"
+revision = "a9595d2ceba8"
+down_revision = "739b134ca21d"
 branch_labels = None
 depends_on = None
 

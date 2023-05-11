@@ -40,7 +40,7 @@ def register(data: UserCreateBasicSchema, session: SQA_Session = Depends(get_ses
 
 
 @router.get("/users/me", response_model=UserDetailSchema, status_code=200)
-def all_users(
+def get_user_profile(
     user=Depends(auth_handler.auth_wrapper),
     session: SQA_Session = Depends(get_session),
 ):

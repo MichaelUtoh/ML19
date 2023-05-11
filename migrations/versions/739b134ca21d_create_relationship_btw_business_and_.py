@@ -1,8 +1,8 @@
-"""add product table
+"""create relationship btw business and product tables
 
-Revision ID: f003c5824687
-Revises: a3727217bd3b
-Create Date: 2023-05-07 23:54:21.567394
+Revision ID: 739b134ca21d
+Revises: f003c5824687
+Create Date: 2023-05-08 23:53:16.200424
 
 """
 from alembic import op
@@ -11,8 +11,8 @@ import sqlmodel
 
 
 # revision identifiers, used by Alembic.
-revision = "f003c5824687"
-down_revision = "a3727217bd3b"
+revision = "739b134ca21d"
+down_revision = "f003c5824687"
 branch_labels = None
 depends_on = None
 

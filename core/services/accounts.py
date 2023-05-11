@@ -9,9 +9,10 @@ from fastapi import HTTPException
 from sqlmodel import select
 
 from core.models.accounts import User, UserStatus
+from core.models.businesses import Business, Location
 from core.config.auth import AuthHandler
 from core.config.tasks import send_welcome_email_task
-from core.config.utils import db_save
+from core.config.utils import db_save, business_location_func
 from core.config.permissions import (
     has_admin_permission,
     has_business_permission,
@@ -32,6 +33,10 @@ def pwd_strength_checker(data):
 def get_user_info_func(user, session):
     with session:
         user = session.exec(select(User).where(User.email == user)).first()
+        user.businesses = session.exec(
+            select(Business).where(Business.user == user)
+        ).all()
+        business_location_func(user.businesses, session)
         return user
 
 
