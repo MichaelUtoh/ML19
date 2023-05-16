@@ -52,18 +52,17 @@ def business_list_func(
     user: Depends(auth_handler.auth_wrapper),
     session: SQA_Session = Depends(get_session),
 ):
-    data = []
     user = session.query(User).where(User.email == user).first()
 
     if has_business_permission(user):
-        data = session.query(Business).where(Business.user == user).all()
+        businesses = session.query(Business).where(Business.user == user).all()
         business_location_func(businesses, session)
 
     elif has_admin_permission(user):
         businesses = session.query(Business).all()
         business_location_func(businesses, session)
 
-    return data
+    return businesses
 
 
 def business_create_func(
