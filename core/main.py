@@ -1,3 +1,5 @@
+import warnings
+
 import sentry_sdk
 from decouple import config
 from fastapi import FastAPI
@@ -8,10 +10,14 @@ from fastapi.openapi.docs import (
 )
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from fastapi_pagination import add_pagination
 from fastapi_sqlalchemy import DBSessionMiddleware
 
 from core.routers import accounts, businesses, machine
 from core.config.database import create_db_and_tables
+
+
+warnings.simplefilter("ignore")
 
 
 if config("DEBUG") == True:
@@ -66,3 +72,4 @@ app.add_middleware(DBSessionMiddleware, db_url=config("DATABASE_URL"))
 app.include_router(accounts.router)
 app.include_router(businesses.router)
 app.include_router(machine.router)
+add_pagination(app)
