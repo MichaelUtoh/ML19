@@ -9,8 +9,8 @@ def has_admin_permission(user):
     return True
 
 
-def has_business_permission(user):
-    if not user.status == UserStatus.BUSINESS_OWNER:
+def has_business_permission(user, business):
+    if not business.user.email == user.email:
         return False
     return True
 

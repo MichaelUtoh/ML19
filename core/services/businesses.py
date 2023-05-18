@@ -3,6 +3,7 @@ from typing import Optional
 from cloudinary.uploader import upload
 from decouple import config
 from fastapi import Depends, HTTPException
+from fastapi_pagination import add_pagination, paginate
 from sqlalchemy.orm import Session as SQA_Session
 
 from core.config.auth import AuthHandler
@@ -10,10 +11,13 @@ from core.config.database import get_session
 from core.config.permissions import has_admin_permission, has_business_permission
 from core.config.utils import (
     business_location_func,
-    db_save,
     db_bulk_delete,
+    db_queryset,
     db_obj_by_fkeys,
+    db_obj_by_id,
     db_obj_by_uuid,
+    db_obj_delete,
+    db_save,
     get_db_user,
 )
 from core.schema.businesses import BusinessCreateSchema, LocationSchema
@@ -28,9 +32,7 @@ def locations_list_func(
     user: Depends(auth_handler.auth_wrapper),
     session: SQA_Session = Depends(get_session),
 ):
-    user = session.query(User).where(User.email == user).first()
-    if not has_business_permission(user) and not has_admin_permission(user):
-        raise HTTPException(status_code=404, detail="Not allowed, Kindly contact admin")
+    # TODO Requires permission???
     return session.query(Location).all()
 
 
@@ -48,21 +50,23 @@ def locations_create_func(
 
 
 def business_list_func(
-    uuid: Optional[str],
     user: Depends(auth_handler.auth_wrapper),
     session: SQA_Session = Depends(get_session),
 ):
-    user = session.query(User).where(User.email == user).first()
+    user = get_db_user(user, session)
+    business_qs = db_queryset(Business, session)
 
-    if has_business_permission(user):
-        businesses = session.query(Business).where(Business.user == user).all()
-        business_location_func(businesses, session)
+    user_businesses = []
+    for idx in business_qs:
+        if has_business_permission(user, idx):
+            user_businesses.append(idx)
 
+    if user_businesses:
+        business_location_func(user_businesses, session)
+        return paginate(user_businesses)
     elif has_admin_permission(user):
-        businesses = session.query(Business).all()
-        business_location_func(businesses, session)
-
-    return businesses
+        business_location_func(business_qs, session)
+        return paginate(business_qs)
 
 
 def business_create_func(
@@ -81,16 +85,12 @@ def business_create_func(
 
     business = Business(
         name=data.name,
-        logo=data.logo,
         description=data.description,
         address=data.address,
         open_days=data.open_days,
         location_id=location.id,
         user_id=user.id,
     )
-    # print('=================>')
-    # print(business)
-    # print('<=================')
     return db_save(business, session)
 
 
@@ -99,15 +99,13 @@ def business_obj_func(
     user: Depends(auth_handler.auth_wrapper),
     session: SQA_Session = Depends(get_session),
 ):
-    user = session.query(User).where(User.email == user).first()
-    if not has_admin_permission(user) and not has_business_permission(user):
+    user = get_db_user(user, session)
+    business = db_obj_by_uuid(uuid, Business, session)
+
+    if not has_admin_permission(user) and not has_business_permission(user, business):
         raise HTTPException(status_code=404, detail="Not Allowed, Kindly contact Admin")
 
-    business = db_obj_by_uuid(uuid, Business, session)
-    business.open_days = business.open_days.strip("{}").split(",")
-    business.location = (
-        session.query(Location).where(Location.id == business.location_id).first()
-    )
+    business_location_func([business], session)
     return business
 
 
@@ -118,22 +116,17 @@ def business_update_func(
     session: SQA_Session = Depends(get_session),
 ):
     user = session.query(User).where(User.email == user).first()
-    if not has_admin_permission(user) and not has_business_permission(user):
+    business = db_obj_by_uuid(uuid, Business, session)
+    if not has_admin_permission(user) and not has_business_permission(user, business):
         raise HTTPException(status_code=404, detail="Not Allowed, Kindly contact Admin")
 
-    business = session.query(Business).where(Business.uuid == uuid).first()
     business.name = data.name
     business.description = data.description
     business.open_days = data.open_days
     business.address = data.address
     business.location_id = data.location
-
     business = db_save(business, session)
-
-    business.open_days = business.open_days.strip("{}").split(",")
-    business.location = (
-        session.query(Location).where(Location.id == business.location_id).first()
-    )
+    business_location_func([business], session)
     return business
 
 
@@ -152,32 +145,38 @@ def business_logo_func(uuid, file, user, session):
 
 
 def business_delete_func(
-    ids: list,
+    uuid: str,
     user: Depends(auth_handler.auth_wrapper),
     session: SQA_Session = Depends(get_session),
 ):
-    user = session.query(User).where(User.email == user).first()
-    if not has_admin_permission(user):
+    business = db_obj_by_uuid(uuid, Business, session)
+    user = db_obj_by_id(user, User, session)
+    if not has_business_permission(user, business):
         raise HTTPException(status_code=404, detail="Not allowed, Kindly contact Admin")
-
-    db_bulk_delete(ids, Business, session)
+    db_obj_delete(business, session)
 
 
 def get_business_products_func(uuid, user, session):
     user = get_db_user(user, session)
-    if not has_admin_permission(user) and not has_business_permission(user):
+    business = db_obj_by_uuid(uuid, Business, session)
+
+    if not has_admin_permission(user) and not has_business_permission(user, business):
         raise HTTPException(status_code=404, detail="Not allowed, Kindly contact Admin")
 
-    business = db_obj_by_uuid(uuid, Business, session)
     business.products = db_obj_by_fkeys(business, Product, session)
-    return business
+    return paginate(business.products)
 
 
 def add_business_products(uuid, data, user, session):
-    print(data)
     try:
         business = db_obj_by_uuid(uuid, Business, session)
     except:
         raise HTTPException(status_code=404, detail="Not found")
 
-    products = None
+    obj = Product(
+        name=data.name,
+        product_no=data.product_no,
+        description=data.description,
+        business_id=business.id,
+    )
+    return db_save(obj, session)

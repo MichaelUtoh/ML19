@@ -2,6 +2,7 @@ import uuid
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, File, UploadFile
+from fastapi_pagination import Page
 from sqlalchemy.orm import Session as SQA_Session
 
 from core.config.auth import AuthHandler
@@ -14,7 +15,7 @@ from core.schema.businesses import (
     LocationDetailSchema,
     LocationSchema,
 )
-from core.schema.products import ProductCreateUpdateSchema
+from core.schema.products import ProductCreateUpdateSchema, ProductListSchema
 from core.services.businesses import (
     add_business_products,
     business_create_func,
@@ -52,13 +53,12 @@ def get_location(
     return data
 
 
-@router.get("/businesses", response_model=List[BusinessDetailListSchema])
+@router.get("/businesses", response_model=Page[BusinessDetailListSchema])
 def businesses(
-    # uuid: Optional[str] = None,
     user=Depends(auth_handler.auth_wrapper),
     session: SQA_Session = Depends(get_session),
 ):
-    data = business_list_func(uuid, user, session)
+    data = business_list_func(user, session)
     return data
 
 
@@ -72,14 +72,13 @@ def businesses(
     return data
 
 
-@router.patch("/businesses/delete", status_code=204)
+@router.delete("/businesses/delete", status_code=204)
 def delete_business(
-    ids: IdListSchema,
+    uuid: str,
     user=Depends(auth_handler.auth_wrapper),
     session: SQA_Session = Depends(get_session),
 ):
-    business_delete_func(ids, user, session)
-    return
+    return business_delete_func(uuid, user, session)
 
 
 @router.get("/businesses/{uuid}/details", response_model=BusinessDetailListSchema)
@@ -118,7 +117,7 @@ def update_business_details(
     return data
 
 
-@router.get("/businesses/{uuid}/products", response_model=BusinessProductsSchema)
+@router.get("/businesses/{uuid}/products", response_model=Page[ProductListSchema])
 def get_products(
     uuid: str,
     email=Depends(auth_handler.auth_wrapper),
@@ -127,21 +126,21 @@ def get_products(
     return get_business_products_func(uuid, email, session)
 
 
-@router.post("/businesses/{uuid}/products/add")
+@router.post("/businesses/{uuid}/products/add", response_model=ProductListSchema)
 def add_products(
     uuid: str,
     data: ProductCreateUpdateSchema,
     user=Depends(auth_handler.auth_wrapper),
     session: SQA_Session = Depends(get_session),
 ):
-    add_business_products(uuid, data, user, session)
-    return {}
+    return add_business_products(uuid, data, user, session)
 
 
-@router.post("/businesses/{uuid}/products/upload")
+@router.post("/businesses/{uuid}/products/upload", response_model=ProductListSchema)
 def businesses(
     uuid: str,
     user=Depends(auth_handler.auth_wrapper),
+    file: UploadFile = File(),
     session: SQA_Session = Depends(get_session),
 ):
     return {}
