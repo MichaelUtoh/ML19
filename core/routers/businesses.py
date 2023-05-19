@@ -18,6 +18,7 @@ from core.schema.businesses import (
 from core.schema.products import ProductCreateUpdateSchema, ProductListSchema
 from core.services.businesses import (
     add_business_products,
+    batch_upload_func,
     business_create_func,
     business_delete_func,
     business_list_func,
@@ -136,14 +137,16 @@ def add_products(
     return add_business_products(uuid, data, user, session)
 
 
-@router.post("/businesses/{uuid}/products/upload", response_model=ProductListSchema)
+@router.post(
+    "/businesses/{uuid}/products/upload",
+)  # response_model=ProductListSchema)
 def businesses(
     uuid: str,
     user=Depends(auth_handler.auth_wrapper),
     file: UploadFile = File(),
     session: SQA_Session = Depends(get_session),
 ):
-    return {}
+    return batch_upload_func(uuid, user, file, session)
 
 
 @router.get("/businesses/{uuid}/reviews")

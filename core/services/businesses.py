@@ -1,3 +1,5 @@
+import csv
+import datetime
 from typing import Optional
 
 from cloudinary.uploader import upload
@@ -180,3 +182,41 @@ def add_business_products(uuid, data, user, session):
         business_id=business.id,
     )
     return db_save(obj, session)
+
+
+def batch_upload_func(uuid, user, file, session):
+    try:
+        user = get_db_user(user, session)
+        business = db_obj_by_uuid(uuid, Business, session)
+    except:
+        msg = "Something went wrong, Kindly contact admin"
+        raise HTTPException(status_code=404, detail=msg)
+
+    if not has_business_permission(user, business):
+        msg = "Not allowed"
+        raise HTTPException(status_code=404, detail=msg)
+
+    if not file.filename.endswith(".csv"):
+        msg = "Only files with '.csv' type are allowed"
+        raise HTTPException(status_code=404, detail=msg)
+
+    count = 0
+    content = file.file.read().decode("utf-8")
+    csv_data = csv.DictReader(content.splitlines())
+
+    batch = []
+    for row in csv_data:
+        new = Product(
+            name=row["NAME"],
+            product_no=row["PRODUCT NUMBER"],
+            description=row.get("DESCRIPTION"),
+            business_id=business.id,
+            created_timestamp=datetime.datetime.now(),
+        )
+        batch.append(new)
+        count += 1
+
+    for obj in batch:
+        db_save(obj, session)
+
+    return {"detail": f"{count} products uploaded successfully"}
