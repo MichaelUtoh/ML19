@@ -5,26 +5,29 @@ from typing import Optional
 from cloudinary.uploader import upload
 from decouple import config
 from fastapi import Depends, HTTPException
-from fastapi_pagination import add_pagination, paginate
+from fastapi_pagination import paginate
 from sqlalchemy.orm import Session as SQA_Session
 
 from core.config.auth import AuthHandler
 from core.config.database import get_session
-from core.config.permissions import has_admin_permission, has_business_permission
+from core.config.permissions import (
+    has_admin_permission,
+    has_customer_permission,
+    has_business_permission,
+)
 from core.config.utils import (
     business_location_func,
-    db_bulk_delete,
     db_queryset,
-    db_obj_by_fkeys,
     db_obj_by_id,
     db_obj_by_uuid,
     db_obj_delete,
     db_save,
     get_db_user,
+    get_qs_by_fkeys,
 )
 from core.schema.businesses import BusinessCreateSchema, LocationSchema
 from core.models.accounts import User
-from core.models.businesses import Business, Location, Product
+from core.models.businesses import Business, Location, Product, Review
 
 
 auth_handler = AuthHandler()
@@ -85,7 +88,7 @@ def business_create_func(
     if not location:
         raise HTTPException(status_code=404, detail="Location not found")
 
-    business = Business(
+    obj = Business(
         name=data.name,
         description=data.description,
         address=data.address,
@@ -93,7 +96,9 @@ def business_create_func(
         location_id=location.id,
         user_id=user.id,
     )
-    return db_save(business, session)
+    business = db_save(obj, session)
+    business_location_func([business], session)
+    return business
 
 
 def business_obj_func(
@@ -159,21 +164,30 @@ def business_delete_func(
 
 
 def get_business_products_func(uuid, user, session):
-    user = get_db_user(user, session)
-    business = db_obj_by_uuid(uuid, Business, session)
+    try:
+        user = get_db_user(user, session)
+        business = db_obj_by_uuid(uuid, Business, session)
+    except:
+        msg = "Something went wrong, Kindly contact admin"
+        raise HTTPException(status_code=404, detail=msg)
 
     if not has_admin_permission(user) and not has_business_permission(user, business):
         raise HTTPException(status_code=404, detail="Not allowed, Kindly contact Admin")
 
-    business.products = db_obj_by_fkeys(business, Product, session)
-    return paginate(business.products)
+    business.products = get_qs_by_fkeys(business, Product, session)
+    data = paginate(business.products) if len(business.products) > 0 else []
+    return data
 
 
-def add_business_products(uuid, data, user, session):
+def add_business_products_func(uuid, data, user, session):
     try:
+        user = get_db_user(user, session)
         business = db_obj_by_uuid(uuid, Business, session)
     except:
         raise HTTPException(status_code=404, detail="Not found")
+
+    if not has_business_permission(user, business):
+        raise HTTPException(status_code=404, detail="Not allowed, Kindly contact Admin")
 
     obj = Product(
         name=data.name,
@@ -220,3 +234,34 @@ def batch_upload_func(uuid, user, file, session):
         db_save(obj, session)
 
     return {"detail": f"{count} products uploaded successfully"}
+
+
+def get_business_review_func(uuid, user, session):
+    try:
+        user = get_db_user(user, session)
+        business = db_obj_by_uuid(uuid, Business, session)
+    except:
+        msg = "Something went wrong, Kindly contact admin"
+        raise HTTPException(status_code=404, detail=msg)
+
+    if not has_business_permission(user, business):
+        msg = "Not allowed"
+        raise HTTPException(status_code=404, detail=msg)
+
+    business.reviews = get_qs_by_fkeys(business, Review, session)
+    data = paginate(business.reviews) if len(business.reviews) > 0 else []
+    return data
+
+
+def add_business_review_func(uuid, data, user, session):
+    try:
+        user = get_db_user(user, session)
+        business = db_obj_by_uuid(uuid, Business, session)
+    except:
+        raise HTTPException(status_code=404, detail="Not found")
+
+    if not has_customer_permission(user):
+        raise HTTPException(status_code=404, detail="Not allowed, Kindly contact Admin")
+
+    review = Review(user_id=user.id, business_id=business.id, description=data.description)
+    return db_save(review, session)

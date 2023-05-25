@@ -45,13 +45,13 @@ def db_obj_by_uuid(uuid: str, model, session):
         raise HTTPException(status_code=404, detail="Not found.")
 
 
-def db_obj_by_fkeys(fk, model, session):
+def get_qs_by_fkeys(fk, model, session):
     """
-    Get queryset using foriegn keys
+    Get product queryset using business foriegn key
     """
-    # data = session.exec(session.query(model).where(model.business == fk)).all()
-    data = session.query(model).where().all()
-    return data
+    data = session.query(model).all()
+    qs = [i for i in data if i.business == fk]
+    return qs
 
 
 def db_queryset(model, session):

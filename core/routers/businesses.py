@@ -11,13 +11,15 @@ from core.schema.businesses import (
     BusinessCreateSchema,
     BusinessDetailListSchema,
     BusinessProductsSchema,
+    BusinessReviewCreateSchema,
     IdListSchema,
     LocationDetailSchema,
     LocationSchema,
 )
 from core.schema.products import ProductCreateUpdateSchema, ProductListSchema
 from core.services.businesses import (
-    add_business_products,
+    add_business_products_func,
+    add_business_review_func,
     batch_upload_func,
     business_create_func,
     business_delete_func,
@@ -26,6 +28,7 @@ from core.services.businesses import (
     business_obj_func,
     business_update_func,
     get_business_products_func,
+    get_business_review_func,
     locations_create_func,
     locations_list_func,
 )
@@ -63,7 +66,7 @@ def businesses(
     return data
 
 
-@router.post("/businesses/create")
+@router.post("/businesses/create", response_model=BusinessDetailListSchema)
 def businesses(
     data: BusinessCreateSchema,
     user=Depends(auth_handler.auth_wrapper),
@@ -134,7 +137,7 @@ def add_products(
     user=Depends(auth_handler.auth_wrapper),
     session: SQA_Session = Depends(get_session),
 ):
-    return add_business_products(uuid, data, user, session)
+    return add_business_products_func(uuid, data, user, session)
 
 
 @router.post(
@@ -153,16 +156,19 @@ def businesses(
 def business_reviews(
     uuid: str,
     user=Depends(auth_handler.auth_wrapper),
+    session: SQA_Session = Depends(get_session),
 ):
-    return {}
+    return get_business_review_func(uuid, user, session)
 
 
 @router.post("/businesses/{uuid}/reviews/add")
 def business_reviews(
     uuid: str,
+    data: BusinessReviewCreateSchema,
     user=Depends(auth_handler.auth_wrapper),
+    session: SQA_Session = Depends(get_session),
 ):
-    return {}
+    return add_business_review_func(uuid, data, user, session)
 
 
 @router.patch("/businesses/{uuid}/toggle_favorite")

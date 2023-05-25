@@ -40,6 +40,7 @@ class BusinessDetailListSchema(BaseModel):
     address: str
     location: LocationSchema
     open_days: list[str]
+    created_timestamp: datetime
 
 
 class BusinessCreateSchema(BaseModel):
@@ -54,3 +55,13 @@ class BusinessCreateSchema(BaseModel):
     ]
     address: str
     location: int
+
+
+class BusinessReviewListSchema(BaseModel):
+    id: int
+    business_id: int
+    description: str
+
+
+class BusinessReviewCreateSchema(BaseModel):
+    description: str

@@ -20,7 +20,6 @@ class User(SQLModel, table=True):
     first_name: Optional[str] = None
     middle_name: Optional[str] = None
     last_name: Optional[str] = None
-    status: Optional[UserStatus] = UserStatus.CUSTOMER
     phone: Optional[str] = None
     address1: Optional[str] = None
     address2: Optional[str] = None
@@ -28,9 +27,19 @@ class User(SQLModel, table=True):
     next_of_kin_last_name: Optional[str] = None
     next_of_kin_phone: Optional[str] = None
     next_of_kin_address: Optional[str] = None
-    businesses: List["Business"] = Relationship(back_populates="user")
     created_timestamp: Optional[datetime] = Field(default=datetime.utcnow())
     updated_timestamp: Optional[datetime] = Field(default=datetime.utcnow())
 
     class Config:
         orm_mode = True
+
+
+class Profile(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    status: Optional[UserStatus] = UserStatus.CUSTOMER
+    businesses: List["Business"] = Relationship(back_populates="user")
+    reviews: List["Review"] = Relationship(back_populates="user")
+    user_id: Optional[int] = Field(default=None, foreign_key="user.id")
+    user: Optional[User] = Relationship(back_populates="profile")
+    created_timestamp: Optional[datetime] = Field(default=datetime.utcnow())
+    updated_timestamp: Optional[datetime] = Field(default=datetime.utcnow())

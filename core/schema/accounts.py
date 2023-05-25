@@ -52,6 +52,6 @@ class UserDetailSchema(BaseModel):
     next_of_kin_last_name: Optional[str]
     next_of_kin_phone: Optional[str]
     next_of_kin_address: Optional[str]
-    businesses: list[BusinessDetailListSchema]
+    # businesses: list[BusinessDetailListSchema]
     created_timestamp: Optional[datetime] = None
     updated_timestamp: Optional[datetime] = None

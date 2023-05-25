@@ -1,6 +1,8 @@
 script.py
 zen.py
 
+zen/
+
 __pycache__
 
 env/
