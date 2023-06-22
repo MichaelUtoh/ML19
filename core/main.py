@@ -70,6 +70,6 @@ app.add_middleware(
 )
 app.add_middleware(DBSessionMiddleware, db_url=config("DATABASE_URL"))
 app.include_router(accounts.router)
-app.include_router(businesses.router)
-app.include_router(machine.router)
+# app.include_router(businesses.router)
+# app.include_router(machine.router)
 add_pagination(app)

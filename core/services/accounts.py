@@ -8,11 +8,11 @@ from zxcvbn import zxcvbn
 from fastapi import HTTPException
 from sqlmodel import select
 
-from core.models.accounts import User, UserStatus
+from core.models.accounts import Profile, User, UserStatus
 from core.models.businesses import Business, Location
 from core.config.auth import AuthHandler
 from core.config.tasks import send_welcome_email_task
-from core.config.utils import db_save, business_location_func
+from core.config.utils import db_save, get_db_user, business_location_func
 from core.config.permissions import (
     has_admin_permission,
     has_business_permission,
@@ -30,17 +30,12 @@ def pwd_strength_checker(data):
     return True
 
 
-def get_user_info_func(user, session):
-    with session:
-        user = session.exec(select(User).where(User.email == user)).first()
-        # user.businesses = session.exec(
-        #     select(Business).where(Business.user == user)
-        # ).all()
-        # business_location_func(user.businesses, session)
-        return user
+def _get_user_info_func(email, session):
+    user = get_db_user(email, session)
+    return user
 
 
-def list_users_func(user, session, search=None):
+def _list_users_func(user, session, search=None):
     user = session.exec(select(User).where(User.email == user)).first()
     if not has_admin_permission(user):
         msg = "Access denied, Kindly contact Admin"
@@ -48,8 +43,8 @@ def list_users_func(user, session, search=None):
     return session.query(User).order_by(-User.id).all()
 
 
-def signup_func(data, session):
-    if session.exec(select(User).where(User.email == data.email)).first():
+def _signup_func(data, session):
+    if get_db_user(data.email, session):
         msg = "User with the given email already exists"
         raise HTTPException(status_code=400, detail=msg)
 
@@ -71,20 +66,23 @@ def signup_func(data, session):
         email_task = send_welcome_email_task.delay()
         return payload.update({"task_id": email_task.id})
 
-    send_welcome_email_task()
+    if config("CELERY_ENABLED"):
+        send_welcome_email_task.delay()
+
     print("No background task")
     return payload
 
 
-def login_func(data, session):
-    # statement = select(User).where(User.email == data.email.lower())
-    # res = session.exec(statement)
-    # user = res.first()
-    user = get_user_info_func(data.email.lower(), session)
-    print(user)
+def _login_func(data, session):
+    user = get_db_user(data.email, session)
+    if not user:
+        msg = "Invalid credentials"
+        raise HTTPException(status_code=400, detail=msg)
 
-    if not user or not (auth_handler.verify_password(data.password, user.password)):
-        raise HTTPException(status_code=400, detail="Invalid credentials")
+    if not (auth_handler.verify_password(data.password, user.password)):
+        raise HTTPException(
+            status_code=400, detail="Invalid password, credentials try again."
+        )
 
     payload = {
         "email": user.email,
@@ -94,25 +92,15 @@ def login_func(data, session):
     return payload
 
 
-def update_func(id, user, data, session):
-    statement = select(User).where(User.email == user)
-    user = session.exec(statement).one()
-
-    if (not user.status == UserStatus.ADMIN) and (not user.id == id):
+def _update_func(id, email, data, session):
+    user = get_db_user(email, session)
+    if not user.id == id:
         raise HTTPException(status_code=404, detail="Not allowed, kindly contact admin")
-
-    try:
-        statement = select(User).where(User.id == id)
-        user = session.exec(statement).one()
-    except:
-        msg = "User with given ID does not exist."
-        raise HTTPException(status_code=404, detail=msg)
 
     user.username = data.username
     user.first_name = data.first_name
     user.middle_name = data.middle_name
     user.last_name = data.last_name
-    user.status = data.status
     user.phone = data.phone
     user.address1 = data.address1
     user.address2 = data.address2
@@ -124,7 +112,7 @@ def update_func(id, user, data, session):
     return user
 
 
-def delete_user_func(id, user, session):
+def _delete_user_func(id, user, session):
     user = session.exec(select(User).where(User.email == user)).first()
     if not has_admin_permission(user):
         msg = "Access denied, Kindly contact Admin"
@@ -139,3 +127,14 @@ def delete_user_func(id, user, session):
     session.delete(obj)
     session.commit()
     return
+
+
+# Profile
+def _user_profile_schema(id, email, data, session) -> Profile:
+    user = get_db_user(email, session)
+    if not user:
+        raise HTTPException(status_code=404, detail="Not allowed, Kindly contact admin")
+
+    profile = Profile(status=data.status, user_id=user.id)
+    print(profile)
+    return user

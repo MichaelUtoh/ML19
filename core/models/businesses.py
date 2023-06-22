@@ -27,7 +27,7 @@ class Business(SQLModel, table=True):
     location_id: int = Field(default=None, foreign_key="location.id")
     location: Optional[Location] = Relationship(back_populates="businesses")
     profile_id: Optional[int] = Field(default=None, foreign_key="profile.id")
-    profile: Optional[User] = Relationship(back_populates="businesses")
+    # profile: Optional[User] = Relationship(back_populates="businesses")
     products: List["Product"] = Relationship(back_populates="business")
     reviews: List["Review"] = Relationship(back_populates="business")
     created_timestamp: Optional[datetime] = Field(default=datetime.utcnow())
@@ -41,19 +41,9 @@ class Review(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     description: str
     profile_id: Optional[int] = Field(default=None, foreign_key="profile.id")
-    profile: Optional[User] = Relationship(back_populates="reviews")
+    # profile: Optional[User] = Relationship(back_populates="reviews")
     business_id: Optional[int] = Field(default=None, foreign_key="business.id")
     business: Optional[Business] = Relationship(back_populates="reviews")
     created_timestamp: Optional[datetime] = Field(default=datetime.utcnow())
     updated_timestamp: Optional[datetime] = Field(default=datetime.utcnow())
 
-
-class Product(SQLModel, table=True):
-    id: Optional[int] = Field(default=None, primary_key=True)
-    name: str
-    product_no: str
-    description: str
-    business_id: Optional[int] = Field(default=None, foreign_key="business.id")
-    business: Optional[Business] = Relationship(back_populates="products")
-    created_timestamp: Optional[datetime] = Field(default=datetime.utcnow())
-    updated_timestamp: Optional[datetime] = Field(default=datetime.utcnow())

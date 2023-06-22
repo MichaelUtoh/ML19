@@ -44,7 +44,6 @@ class UserDetailSchema(BaseModel):
     first_name: Optional[str]
     middle_name: Optional[str]
     last_name: Optional[str]
-    status: Optional[str]
     phone: Optional[str]
     address1: Optional[str]
     address2: Optional[str]
@@ -55,3 +54,7 @@ class UserDetailSchema(BaseModel):
     # businesses: list[BusinessDetailListSchema]
     created_timestamp: Optional[datetime] = None
     updated_timestamp: Optional[datetime] = None
+
+
+class ProfileCreateSchema(BaseModel):
+    status: str

@@ -263,5 +263,7 @@ def add_business_review_func(uuid, data, user, session):
     if not has_customer_permission(user):
         raise HTTPException(status_code=404, detail="Not allowed, Kindly contact Admin")
 
-    review = Review(user_id=user.id, business_id=business.id, description=data.description)
+    review = Review(
+        user_id=user.id, business_id=business.id, description=data.description
+    )
     return db_save(review, session)

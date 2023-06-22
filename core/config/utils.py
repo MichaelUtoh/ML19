@@ -58,10 +58,6 @@ def db_queryset(model, session):
     return session.query(model).all()
 
 
-# def db_queryset(obj, model, session):
-#     return session.query(model).where(model.user == obj).all()
-
-
 def business_location_func(businesses: list, session):
     from core.models.businesses import Location
 
