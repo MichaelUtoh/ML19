@@ -33,10 +33,10 @@ def pwd_strength_checker(data):
 def get_user_info_func(user, session):
     with session:
         user = session.exec(select(User).where(User.email == user)).first()
-        user.businesses = session.exec(
-            select(Business).where(Business.user == user)
-        ).all()
-        business_location_func(user.businesses, session)
+        # user.businesses = session.exec(
+        #     select(Business).where(Business.user == user)
+        # ).all()
+        # business_location_func(user.businesses, session)
         return user
 
 
@@ -77,9 +77,11 @@ def signup_func(data, session):
 
 
 def login_func(data, session):
-    statement = select(User).where(User.email == data.email.lower())
-    res = session.exec(statement)
-    user = res.first()
+    # statement = select(User).where(User.email == data.email.lower())
+    # res = session.exec(statement)
+    # user = res.first()
+    user = get_user_info_func(data.email.lower(), session)
+    print(user)
 
     if not user or not (auth_handler.verify_password(data.password, user.password)):
         raise HTTPException(status_code=400, detail="Invalid credentials")
